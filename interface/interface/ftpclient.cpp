@@ -31,23 +31,15 @@ FtpClient::FtpClient(const QString& strHost, int port, QWidget* pwgt): QWidget(p
 
 void FtpClient::slotReadyRead()
 {
-    QDataStream in(TcpSocketCommand);
-    for(;;)
+    QTextStream in(TcpSocketCommand);
+    QString str;
+    //qint64 tmp;
+    while(!in.atEnd())
     {
-        if(!nextBlockSize)
-        {
-            if(TcpSocketCommand->bytesAvailable()<sizeof(quint16))
-                break;
-            in>>nextBlockSize;
-        }
-        if(TcpSocketCommand->bytesAvailable()<nextBlockSize)
-            break;
-       // QTime time;
-        QString str;
-        in>>str;
-        info->append(str);
-        nextBlockSize=0;
+        str+=in.readLine();
+        str+='\n';
     }
+    info->append(str);
 }
 
 
@@ -63,12 +55,21 @@ void FtpClient::slotError(QAbstractSocket::SocketError err)
 
 void FtpClient::slotSendToServer()
 {
-    QByteArray arrBlock;
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
     out<<input->text();
-    out.device()->seek(0);
-    out<<quint16(arrBlock.size()-sizeof(quint16));
-    TcpSocketCommand->write(arrBlock);
+    for(int i=0; i<data.size()-1; i++)
+    {
+        if(data[i]=='\0')
+        {
+            data=data.remove(i,1);
+            i--;
+        }
+    }
+    data=data.remove(0,1);
+    data.append('\0');
+    TcpSocketCommand->write(data);
     input->setText("");
 }
 
