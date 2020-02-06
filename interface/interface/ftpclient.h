@@ -20,19 +20,23 @@ private:
     QTextEdit* info;
     QLineEdit* input;
     QPushButton *button;
-    quint16 nextBlockSize;
+
 
 public:
 
     FtpClient(const QString& strHost, int port, QWidget* pwgt=0);
+    FtpClient(QWidget* pwgt=0);
 
 signals:
+    void signalPrint(QString&);
 
 private slots:
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError);
-    void slotSendToServer();
+    void slotSendToServer(QByteArray &);
     void slotConnected();
+    void slotTest();
+    void slotConnectToHost(QString & , int );
 
 };
 

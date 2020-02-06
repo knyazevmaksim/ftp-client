@@ -1,7 +1,14 @@
 #include "ftpclient.h"
 
+FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt)
+{
+     TcpSocketCommand=new QTcpSocket();
+     connect(TcpSocketCommand, SIGNAL(connected()), SLOT(slotConnected()));
+     connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
+     connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
+}
 
-FtpClient::FtpClient(const QString& strHost, int port, QWidget* pwgt): QWidget(pwgt), nextBlockSize(0)
+FtpClient::FtpClient(const QString& strHost, int port, QWidget* pwgt): QWidget(pwgt)
 {
     TcpSocketCommand=new QTcpSocket();
     TcpSocketCommand->connectToHost(strHost, port);
@@ -39,7 +46,7 @@ void FtpClient::slotReadyRead()
         str+=in.readLine();
         str+='\n';
     }
-    info->append(str);
+    emit signalPrint(str);
 }
 
 
@@ -49,32 +56,30 @@ void FtpClient::slotError(QAbstractSocket::SocketError err)
                              :err==QAbstractSocket::RemoteHostClosedError ? "The remote host is closed."
                          :err==QAbstractSocket::ConnectionRefusedError ? "The connection was refused."
                                                                        :QString(TcpSocketCommand->errorString()));
-    info->append(strError);
+    emit signalPrint(strError);
 }
 
 
-void FtpClient::slotSendToServer()
+void FtpClient::slotSendToServer(QByteArray & data)
 {
-    QByteArray data;
-    QDataStream out(&data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_0);
-    out<<input->text();
-    for(int i=0; i<data.size()-1; i++)
-    {
-        if(data[i]=='\0')
-        {
-            data=data.remove(i,1);
-            i--;
-        }
-    }
-    data=data.remove(0,1);
-    data.append('\0');
+
     TcpSocketCommand->write(data);
-    input->setText("");
+
 }
 
 
 void FtpClient::slotConnected()
 {
-    info->append("Recieved the connected() signal");
+    QString str="Recieved the connected() signal";
+    emit signalPrint(str);
+}
+
+void FtpClient::slotTest()
+{
+   qDebug()<<"сюка";
+}
+
+void FtpClient::slotConnectToHost(QString & hostname, int port)
+{
+    TcpSocketCommand->connectToHost(hostname, port);
 }

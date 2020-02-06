@@ -22,14 +22,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     ftpclient.cpp \
     main.cpp \
-  #  mainwindow.cpp
+ \  #  mainwindow.cpp
+    mainwindow.cpp
 
 HEADERS += \
     ftpclient.h \
-#    mainwindow.h
+ \#    mainwindow.h
+    mainwindow.h
 
 FORMS += \
- #   mainwindow.ui
+    mainwindow.ui
+  #   mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
