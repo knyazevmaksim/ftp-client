@@ -10,11 +10,19 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(ui->pushButton_2, SIGNAL(clicked()),SLOT(slotSendSignalHostAndIp()));
     connect(ui->lineEdit, SIGNAL(returnPressed()),SLOT(slotSendSignalHostAndIp()));
     connect(ui->lineEdit_2, SIGNAL(returnPressed()),SLOT(slotSendSignalHostAndIp()));
-    connect(this, SIGNAL(signalGetHostAndIp(QString &, int)),p_ftpClient,SLOT(slotConnectToHost(QString &, int)));
+
+    connect(this, SIGNAL(signalGetHostAndIp(QString &, int&)),p_ftpClient,SLOT(slotConnectToHost(QString &, int&)));
+
     connect(ui->pushButton, SIGNAL(clicked()),SLOT(slotSendMessage()));
     connect(ui->lineEdit_3, SIGNAL(returnPressed()),SLOT(slotSendMessage()));
     connect(this, SIGNAL(signalGetMessage(QByteArray&)),p_ftpClient, SLOT(slotSendToServer(QByteArray&)));
+
     connect(p_ftpClient,SIGNAL(signalPrint(QString&)) , SLOT(slotPrint(QString&)));
+
+    connect(ui->lineEdit_4, SIGNAL(clicked()), SLOT(slotMakeDataConnection()));
+    connect(ui->pushButton_3, SIGNAL(clicked()), SLOT(slotMakeDataConnection()));
+    connect(this, SIGNAL(signalMakeDataConnection(int&)), p_ftpClient, SLOT(slotMakeDataConnection(int&)));
+
 }
 
 MainWindow::~MainWindow()
@@ -55,3 +63,28 @@ void MainWindow::slotPrint(QString & str)
 {
     ui->textBrowser->append(str);
 }
+
+void MainWindow::slotMakeDataConnection()
+{
+
+    int port=ui->lineEdit_4->text().toInt();
+    emit signalMakeDataConnection(port);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

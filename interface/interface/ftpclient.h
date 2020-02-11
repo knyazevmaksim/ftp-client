@@ -17,9 +17,11 @@ class FtpClient : public QWidget
 
 private:
     QTcpSocket* TcpSocketCommand;
+    QTcpSocket* TcpSocketData;
     QTextEdit* info;
     QLineEdit* input;
     QPushButton *button;
+    QString hostName;
 
 
 public:
@@ -36,7 +38,8 @@ private slots:
     void slotSendToServer(QByteArray &);
     void slotConnected();
     void slotTest();
-    void slotConnectToHost(QString & , int );
+    void slotConnectToHost(QString & , int& );
+    void slotMakeDataConnection(int&);
 
 };
 

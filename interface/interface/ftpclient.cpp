@@ -3,9 +3,14 @@
 FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt)
 {
      TcpSocketCommand=new QTcpSocket();
+     TcpSocketData=new QTcpSocket();
      connect(TcpSocketCommand, SIGNAL(connected()), SLOT(slotConnected()));
      connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
      connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
+
+
+
+     connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
 }
 
 FtpClient::FtpClient(const QString& strHost, int port, QWidget* pwgt): QWidget(pwgt)
@@ -74,12 +79,27 @@ void FtpClient::slotConnected()
     emit signalPrint(str);
 }
 
-void FtpClient::slotTest()
+
+void FtpClient::slotConnectToHost(QString & ip, int& port)
 {
-   qDebug()<<"сюка";
+    hostName=ip;
+    TcpSocketCommand->connectToHost(hostName, port);
 }
 
-void FtpClient::slotConnectToHost(QString & hostname, int port)
+void FtpClient::slotMakeDataConnection(int& port)
 {
-    TcpSocketCommand->connectToHost(hostname, port);
+    TcpSocketData->connectToHost(hostName, port);
+}
+
+void FtpClient::slotTest()
+{
+    QTextStream in(TcpSocketData);
+    QString str;
+    //qint64 tmp;
+    while(!in.atEnd())
+    {
+        str+=in.readLine();
+        str+='\n';
+    }
+    emit signalPrint(str);
 }
