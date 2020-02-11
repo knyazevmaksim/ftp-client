@@ -18,10 +18,12 @@ class FtpClient : public QWidget
 private:
     QTcpSocket* TcpSocketCommand;
     QTcpSocket* TcpSocketData;
-    QTextEdit* info;
-    QLineEdit* input;
-    QPushButton *button;
     QString hostName;
+    int passivePort;
+    QString* serverFileList;
+    int numberFiles;
+    int getPassivePort(QString &);
+    QString * getServerFile(QString &);
 
 
 public:
@@ -31,6 +33,7 @@ public:
 
 signals:
     void signalPrint(QString&);
+    void signalAddServerFileList(QString *, int);
 
 private slots:
     void slotReadyRead();
@@ -40,6 +43,8 @@ private slots:
     void slotTest();
     void slotConnectToHost(QString & , int& );
     void slotMakeDataConnection(int&);
+    void slotLogIn(QByteArray&, QByteArray&);
+    void slotShowServerFileList();
 
 };
 

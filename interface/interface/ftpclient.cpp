@@ -13,34 +13,6 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt)
      connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
 }
 
-FtpClient::FtpClient(const QString& strHost, int port, QWidget* pwgt): QWidget(pwgt)
-{
-    TcpSocketCommand=new QTcpSocket();
-    TcpSocketCommand->connectToHost(strHost, port);
-    connect(TcpSocketCommand, SIGNAL(connected()), SLOT(slotConnected()));
-    connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
-    connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
-
-    info=new QTextEdit;
-    input=new QLineEdit;
-
-    info->setReadOnly(true);
-
-    button=new QPushButton("&Send");
-
-    connect(button, SIGNAL(clicked()), SLOT(slotSendToServer()));
-    connect(input, SIGNAL(returnPressed()), this, SLOT(slotSendToServer()));
-
-
-    QVBoxLayout* vbxlayout = new QVBoxLayout;
-    vbxlayout->addWidget(new QLabel("<H1>Client</H1>"));
-    vbxlayout->addWidget(info);
-    vbxlayout->addWidget(input);
-    vbxlayout->addWidget(button);
-    setLayout(vbxlayout);
-
-}
-
 void FtpClient::slotReadyRead()
 {
     QTextStream in(TcpSocketCommand);
@@ -52,6 +24,14 @@ void FtpClient::slotReadyRead()
         str+='\n';
     }
     emit signalPrint(str);
+    if (str.startsWith("229"))
+        passivePort=getPassivePort(str);
+    if (str.startsWith("150"))
+    {
+
+        /*serverFileList=getServerFile(str);
+        emit signalAddServerFileList(serverFileList, numberFiles);*/
+    }
 }
 
 
@@ -103,3 +83,80 @@ void FtpClient::slotTest()
     }
     emit signalPrint(str);
 }
+
+void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
+{
+    name=name.prepend("user ");
+    pass=pass.prepend("pass ");
+    TcpSocketCommand->write(name);
+    TcpSocketCommand->write(pass);
+}
+
+void FtpClient::slotShowServerFileList()
+{
+    TcpSocketCommand->write("epsv");
+    //обработка строки ответа сервера с номером порта для data соединения
+
+    //connect data соединения
+    TcpSocketData->connectToHost(hostName, passivePort);
+    //команда list
+    TcpSocketCommand->write("list");
+    //вывод ее результатов в QListWidget2
+
+    emit signalAddServerFileList(serverFileList, numberFiles);
+
+
+
+
+
+}
+
+int FtpClient::getPassivePort(QString & str)
+{
+    int port;
+    QString tmp;
+    int start, end;
+    start=str.indexOf("|||");
+    end=str.indexOf("|", start+3);
+    for(int i=start+3; i<end; i++)
+    {
+        tmp+=str[i];
+    }
+    port=tmp.toInt();
+    return port;
+}
+
+QString* FtpClient::getServerFile(QString& str)
+{
+    QString * fileName;
+    QString tmp;
+    int start{0}, end{0};
+    int count{0};
+    while(end!=str.size())
+    {
+        start=str.indexOf(":", start)+3;
+        end=str.indexOf("\n",end+1);
+        for(int i=start; i<=end; i++)
+        {
+           tmp+=str[i];
+        }
+    count++;
+    }
+    fileName=new QString(count);
+    numberFiles=count;
+    for(int i=0; i<count; i++)
+    {
+        int j=0;
+        while(tmp[j]!="\n")
+        {
+            fileName[i][j]=tmp[j];
+            ++j;
+        }
+    }
+    return fileName;
+}
+
+
+
+
+
