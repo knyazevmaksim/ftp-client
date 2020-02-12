@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+ #include <QListWidgetItem>
 #include "ftpclient.h"
 
 namespace Ui {
@@ -20,12 +21,14 @@ public:
 private:
     Ui::MainWindow *ui;
     FtpClient *p_ftpClient;
+    QString fileName;
 
 signals:
     void signalGetHostAndIp(QString& , int & );
     void signalGetMessage(QByteArray&);
     void signalMakeDataConnection(int& );
     void signalGetUserNameAndPass(QByteArray &, QByteArray &);
+    void signalDownloadText(QString &);
 
 private slots:
     void slotSendSignalHostAndIp();
@@ -34,6 +37,8 @@ private slots:
     void slotMakeDataConnection();
     void slotSendUserNameAndPass();
     void slotAddServerFileList(QString &);
+    void slotSendDownloadTextSignal();
+    void slotGetChosenItem(QListWidgetItem*);
 
 };
 

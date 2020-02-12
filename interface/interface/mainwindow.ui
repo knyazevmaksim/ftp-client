@@ -149,7 +149,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="downLoadButton">
     <property name="geometry">
      <rect>
       <x>340</x>

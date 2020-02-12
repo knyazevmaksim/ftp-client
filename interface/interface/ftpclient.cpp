@@ -1,6 +1,6 @@
 #include "ftpclient.h"
 
-FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}
+FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, download{false}
 {
      TcpSocketCommand=new QTcpSocket();
      TcpSocketData=new QTcpSocket();
@@ -8,9 +8,10 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}
      connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
      connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
-
-
      connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
+
+
+     connect(this, SIGNAL(signalDownload(QString &)), SLOT(slotDownloadTextFile(QString &)));
 }
 
 void FtpClient::slotReadyRead()
@@ -26,8 +27,8 @@ void FtpClient::slotReadyRead()
     emit signalPrint(str);
     if (str.startsWith("229"))
         passivePort=getPassivePort(str);
-    if (str.startsWith("150"))
-        isServerFileList=true;
+    /*if (str.startsWith("150"))
+        isServerFileList=true;*///условие работает когда не нужно
 }
 
 
@@ -81,9 +82,10 @@ void FtpClient::slotTest()
     if (isServerFileList)
     {
         serverFileList=getServerFile(str);
-        emit signalAddServerFileList(serverFileList);
         isServerFileList=false;
     }
+    if (download)
+        emit signalDownload(str);
 }
 
 void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
@@ -96,13 +98,17 @@ void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
 
 void FtpClient::slotShowServerFileList()
 {
-    TcpSocketCommand->write("epsv");
+    isServerFileList=true;
+    QByteArray command="epsv";
+    command+='\0';
+    TcpSocketCommand->write(command);
     //обработка строки ответа сервера с номером порта для data соединения
-
     //connect data соединения
     TcpSocketData->connectToHost(hostName, passivePort);
     //команда list
-    TcpSocketCommand->write("list");
+    command="list";
+    command+='\0';
+    TcpSocketCommand->write(command);
     //вывод ее результатов в QListWidget2
 
     emit signalAddServerFileList(serverFileList);
@@ -144,6 +150,56 @@ QString FtpClient::getServerFile(QString& str)
     return tmp;
 }
 
+void FtpClient::slotDownloadTextFile(QString & data)
+{
+    QFile file;
+    file.setFileName("C:/Users/knyazev.m/Desktop/"+fileName);
+    file.open(QIODevice::WriteOnly);
+    QByteArray tmp;
+    QDataStream out(&tmp, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out<<data;
+    for(int i=0; i<tmp.size()-1; i++)
+    {
+        if(tmp[i]=='\0')
+        {
+            tmp=tmp.remove(i,1);
+            i--;
+        }
+    }
+    tmp=tmp.remove(0,1);
+    tmp.append('\0');
+
+    file.write(tmp);
+    file.close();
+}
+
+void FtpClient::slotDownload(QString & name)
+{
+    download=true;
+    QByteArray command="epsv";
+    command.append('\0');
+    TcpSocketCommand->write(command);
+    TcpSocketData->connectToHost(hostName, 50001);
+    QByteArray tmp;
+    QDataStream out(&tmp, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out<<name;
+    for(int i=0; i<tmp.size()-1; i++)
+    {
+        if(tmp[i]=='\0')
+        {
+            tmp=tmp.remove(i,1);
+            i--;
+        }
+    }
+    tmp=tmp.remove(0,1);
+    command="retr";
+    command+=tmp;
+    command.append('\0');
+    TcpSocketCommand->write(command);
+    fileName=name;
+}
 
 
 

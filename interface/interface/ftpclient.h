@@ -4,11 +4,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QTcpSocket>
-#include <QTextEdit>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QLabel>
+#include <QFile>
 
 
 class FtpClient : public QWidget
@@ -24,6 +20,9 @@ private:
     int getPassivePort(QString &);
     QString getServerFile(QString &);
     bool isServerFileList;
+    bool download;
+    QString fileName;
+
 
 public:
 
@@ -33,6 +32,7 @@ public:
 signals:
     void signalPrint(QString&);
     void signalAddServerFileList(QString &);
+    void signalDownload(QString &);
 
 private slots:
     void slotReadyRead();
@@ -44,6 +44,8 @@ private slots:
     void slotMakeDataConnection(int&);
     void slotLogIn(QByteArray&, QByteArray&);
     void slotShowServerFileList();
+    void slotDownloadTextFile(QString &);
+    void slotDownload(QString &);
 
 };
 
