@@ -28,9 +28,9 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(ui->lineEdit_5, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
     connect(ui->lineEdit_6, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
     connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotLogIn(QByteArray &, QByteArray &)));
-    connect(this, SIGNAL(signalGetUserNameAndPass()), p_ftpClient, SLOT(slotShowServerFileList()));
+    //connect(this, SIGNAL(signalGetUserNameAndPass()), p_ftpClient, SLOT(slotShowServerFileList()));
 
-    connect(p_ftpClient, SIGNAL(signalAddServerFileList(QString *, int )), SLOT(slotAddServerFileList(QString *, int)));
+    connect(p_ftpClient, SIGNAL(signalAddServerFileList(QString&)), SLOT(slotAddServerFileList(QString&)));
 
 }
 
@@ -114,10 +114,23 @@ void MainWindow::slotSendUserNameAndPass()
     emit signalGetUserNameAndPass(name, pass);
 }
 
-void MainWindow::slotAddServerFileList(QString* str, int count)
+void MainWindow::slotAddServerFileList(QString& str)
 {
-    for(int i=0; i<=count; i++)
-        ui->listWidget_2->addItem(*str);
+    QString tmp;
+    int start{0}, end{0};
+    //очистить список файлов
+    while(end!=str.size()-1)
+    {
+        end=str.indexOf("\n",end+1);
+        for(int i=start; i<=end; i++)
+        {
+           tmp+=str[i];
+        }
+        start=end;
+        ui->listWidget_2->addItem(tmp);
+        tmp="";
+    }
+
 }
 
 

@@ -20,11 +20,10 @@ private:
     QTcpSocket* TcpSocketData;
     QString hostName;
     int passivePort;
-    QString* serverFileList;
-    int numberFiles;
+    QString serverFileList;
     int getPassivePort(QString &);
-    QString * getServerFile(QString &);
-
+    QString getServerFile(QString &);
+    bool isServerFileList;
 
 public:
 
@@ -33,7 +32,7 @@ public:
 
 signals:
     void signalPrint(QString&);
-    void signalAddServerFileList(QString *, int);
+    void signalAddServerFileList(QString &);
 
 private slots:
     void slotReadyRead();

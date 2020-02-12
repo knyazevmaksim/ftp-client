@@ -33,7 +33,7 @@ private slots:
     void slotPrint(QString&);
     void slotMakeDataConnection();
     void slotSendUserNameAndPass();
-    void slotAddServerFileList(QString *, int);
+    void slotAddServerFileList(QString &);
 
 };
 

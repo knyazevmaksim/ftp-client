@@ -1,6 +1,6 @@
 #include "ftpclient.h"
 
-FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt)
+FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}
 {
      TcpSocketCommand=new QTcpSocket();
      TcpSocketData=new QTcpSocket();
@@ -27,11 +27,7 @@ void FtpClient::slotReadyRead()
     if (str.startsWith("229"))
         passivePort=getPassivePort(str);
     if (str.startsWith("150"))
-    {
-
-        /*serverFileList=getServerFile(str);
-        emit signalAddServerFileList(serverFileList, numberFiles);*/
-    }
+        isServerFileList=true;
 }
 
 
@@ -82,6 +78,12 @@ void FtpClient::slotTest()
         str+='\n';
     }
     emit signalPrint(str);
+    if (isServerFileList)
+    {
+        serverFileList=getServerFile(str);
+        emit signalAddServerFileList(serverFileList);
+        isServerFileList=false;
+    }
 }
 
 void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
@@ -103,7 +105,7 @@ void FtpClient::slotShowServerFileList()
     TcpSocketCommand->write("list");
     //вывод ее результатов в QListWidget2
 
-    emit signalAddServerFileList(serverFileList, numberFiles);
+    emit signalAddServerFileList(serverFileList);
 
 
 
@@ -126,13 +128,11 @@ int FtpClient::getPassivePort(QString & str)
     return port;
 }
 
-QString* FtpClient::getServerFile(QString& str)
+QString FtpClient::getServerFile(QString& str)
 {
-    QString * fileName;
     QString tmp;
     int start{0}, end{0};
-    int count{0};
-    while(end!=str.size())
+    while(end!=str.size()-1)
     {
         start=str.indexOf(":", start)+3;
         end=str.indexOf("\n",end+1);
@@ -140,20 +140,8 @@ QString* FtpClient::getServerFile(QString& str)
         {
            tmp+=str[i];
         }
-    count++;
     }
-    fileName=new QString(count);
-    numberFiles=count;
-    for(int i=0; i<count; i++)
-    {
-        int j=0;
-        while(tmp[j]!="\n")
-        {
-            fileName[i][j]=tmp[j];
-            ++j;
-        }
-    }
-    return fileName;
+    return tmp;
 }
 
 
