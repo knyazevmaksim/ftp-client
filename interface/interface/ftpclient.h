@@ -22,12 +22,11 @@ private:
     bool isServerFileList;
     bool download;
     QString fileName;
-
+    QByteArray QStringToQByteArray (const QString &);
 
 public:
-
-    FtpClient(const QString& strHost, int port, QWidget* pwgt=0);
     FtpClient(QWidget* pwgt=0);
+    void get(const QString &, QIODevice * device=0);
 
 signals:
     void signalPrint(QString&);

@@ -26,7 +26,7 @@ void FtpClient::slotReadyRead()
         str+=in.readLine();
         str+='\n';
     }
-    if (isServerFileList)
+    if (isServerFileList||download)
     {
         passivePort=getPassivePort(str);
     }
@@ -80,7 +80,7 @@ void FtpClient::slotTest()
     QTextStream in(TcpSocketData);
     QString str;
     //qint64 tmp;
-    while(!in.atEnd())
+    while((!in.atEnd())&&(isServerFileList))
     {
         str+=in.readLine();
         str+='\n';
@@ -106,6 +106,7 @@ void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
 void FtpClient::slotShowServerFileList()
 {
     isServerFileList=true;
+    download=true;
     QByteArray command="epsv";
     command+='\0';
     slotSendToServer(command);
@@ -120,6 +121,7 @@ void FtpClient::slotShowServerFileList()
     TcpSocketData->waitForReadyRead();
     //вывод ее результатов в QListWidget2
     isServerFileList=false;
+    download=false;
     emit signalAddServerFileList(serverFileList);
 
 
@@ -185,7 +187,13 @@ void FtpClient::slotDownloadTextFile(QString & data)
 
 void FtpClient::slotDownload(QString & name)
 {
-    download=true;
+    QFile file;
+    file.setFileName("C:/Users/knyazev.m/Desktop/test.txt");
+
+    isServerFileList=false;
+    get(name, &file);
+
+    /*download=true;
     QByteArray command="epsv";
     command.append('\0');
     TcpSocketCommand->write(command);
@@ -207,7 +215,50 @@ void FtpClient::slotDownload(QString & name)
     command+=tmp;
     command.append('\0');
     TcpSocketCommand->write(command);
-    fileName=name;
+    fileName=name;*/
+}
+
+void FtpClient::get(const QString & file, QIODevice * device)
+{
+    download=true;
+    QByteArray command="epsv";
+    QByteArray name=QStringToQByteArray(file);
+    command.append('\0');
+    slotSendToServer(command);
+    slotMakeDataConnection(passivePort);
+    command="retr";
+    command+=name;
+    command.append('\0');
+    slotSendToServer(command);
+    QTextStream in(TcpSocketData);
+    QString str;
+    while(!in.atEnd())
+    {
+        str+=in.readLine();
+        str+='\n';
+    }
+    command=QStringToQByteArray(str);
+    device->open(QIODevice::WriteOnly);
+    device->write(command);
+
+}
+
+QByteArray FtpClient::QStringToQByteArray (const QString & str)
+{
+    QByteArray tmp;
+    QDataStream out(&tmp, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out<<str;
+    for(int i=0; i<tmp.size()-1; i++)
+    {
+        if(tmp[i]=='\0')
+        {
+            tmp=tmp.remove(i,1);
+            i--;
+        }
+    }
+    tmp=tmp.remove(0,1);
+    return tmp;
 }
 
 

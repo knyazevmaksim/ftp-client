@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    //FtpClient client("localhost", 21);
+
     FtpClient client;
     MainWindow interface(nullptr, &client);
     interface.show();

@@ -145,16 +145,12 @@ void MainWindow::slotAddServerFileList(QString& str)
 
 void MainWindow::slotSendDownloadTextSignal()
 {
-
-
-
     emit signalDownloadText(fileName);
 }
 
 void MainWindow::slotGetChosenItem(QListWidgetItem * item)
 {
     fileName=item->text();
-
 }
 
 
