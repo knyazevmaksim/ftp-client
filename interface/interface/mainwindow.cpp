@@ -28,7 +28,10 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(ui->lineEdit_5, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
     connect(ui->lineEdit_6, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
     connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotLogIn(QByteArray &, QByteArray &)));
-    connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotShowServerFileList()));
+    //connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotShowServerFileList()));
+
+
+    connect(ui->pushButton_4, SIGNAL(clicked()), p_ftpClient, SLOT(slotShowServerFileList()));
 
 
     connect(p_ftpClient, SIGNAL(signalAddServerFileList(QString&)), SLOT(slotAddServerFileList(QString&)));

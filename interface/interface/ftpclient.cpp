@@ -9,6 +9,8 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, down
      connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
      connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
+     connect(TcpSocketData, SIGNAL(connected()), SLOT(slotConnected()));
+     //connect(TcpSocketData, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
 
      connect(this, SIGNAL(signalDownload(QString &)), SLOT(slotDownloadTextFile(QString &)));
@@ -24,9 +26,11 @@ void FtpClient::slotReadyRead()
         str+=in.readLine();
         str+='\n';
     }
-    emit signalPrint(str);
-    if (str.startsWith("229"))
+    if (isServerFileList)
+    {
         passivePort=getPassivePort(str);
+    }
+    emit signalPrint(str);
     /*if (str.startsWith("150"))
         isServerFileList=true;*///условие работает когда не нужно
 }
@@ -46,6 +50,9 @@ void FtpClient::slotSendToServer(QByteArray & data)
 {
 
     TcpSocketCommand->write(data);
+    TcpSocketCommand->flush();
+    TcpSocketCommand->waitForReadyRead();
+
 
 }
 
@@ -101,16 +108,18 @@ void FtpClient::slotShowServerFileList()
     isServerFileList=true;
     QByteArray command="epsv";
     command+='\0';
-    TcpSocketCommand->write(command);
+    slotSendToServer(command);
+
     //обработка строки ответа сервера с номером порта для data соединения
     //connect data соединения
     TcpSocketData->connectToHost(hostName, passivePort);
     //команда list
     command="list";
     command+='\0';
-    TcpSocketCommand->write(command);
+    slotSendToServer(command);
+    TcpSocketData->waitForReadyRead();
     //вывод ее результатов в QListWidget2
-
+    isServerFileList=false;
     emit signalAddServerFileList(serverFileList);
 
 
