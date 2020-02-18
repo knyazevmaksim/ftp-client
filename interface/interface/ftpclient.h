@@ -27,6 +27,9 @@ private:
 public:
     FtpClient(QWidget* pwgt=0);
     void get(const QString &, QIODevice * device=0);
+    QByteArray readAllData();
+    QByteArray readAllCommand();
+    void list(const QString &);
 
 signals:
     void signalPrint(QString&);

@@ -5,10 +5,10 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, down
      TcpSocketCommand=new QTcpSocket();
      TcpSocketData=new QTcpSocket();
      connect(TcpSocketCommand, SIGNAL(connected()), SLOT(slotConnected()));
-     connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
+    // connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
      connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
-     connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
+    // connect(TcpSocketData, SIGNAL(readyRead()), SLOT(slotTest()));
      connect(TcpSocketData, SIGNAL(connected()), SLOT(slotConnected()));
      //connect(TcpSocketData, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
@@ -80,7 +80,7 @@ void FtpClient::slotTest()
     QTextStream in(TcpSocketData);
     QString str;
     //qint64 tmp;
-    while((!in.atEnd())&&(isServerFileList))
+    while(!in.atEnd())
     {
         str+=in.readLine();
         str+='\n';
@@ -106,7 +106,7 @@ void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
 void FtpClient::slotShowServerFileList()
 {
     isServerFileList=true;
-    download=true;
+    /*download=true;
     QByteArray command="epsv";
     command+='\0';
     slotSendToServer(command);
@@ -122,6 +122,8 @@ void FtpClient::slotShowServerFileList()
     //вывод ее результатов в QListWidget2
     isServerFileList=false;
     download=false;
+    */
+    list("/");
     emit signalAddServerFileList(serverFileList);
 
 
@@ -188,7 +190,9 @@ void FtpClient::slotDownloadTextFile(QString & data)
 void FtpClient::slotDownload(QString & name)
 {
     QFile file;
-    file.setFileName("C:/Users/knyazev.m/Desktop/test.txt");
+    //file.setFileName("C:/Users/knyazev.m/Desktop/test.txt");
+    file.setFileName("C:/Users/yhwh/Desktop/test.txt");
+
 
     isServerFileList=false;
     get(name, &file);
@@ -230,14 +234,7 @@ void FtpClient::get(const QString & file, QIODevice * device)
     command+=name;
     command.append('\0');
     slotSendToServer(command);
-    QTextStream in(TcpSocketData);
-    QString str;
-    while(!in.atEnd())
-    {
-        str+=in.readLine();
-        str+='\n';
-    }
-    command=QStringToQByteArray(str);
+    command=readAllData();
     device->open(QIODevice::WriteOnly);
     device->write(command);
 
@@ -260,6 +257,71 @@ QByteArray FtpClient::QStringToQByteArray (const QString & str)
     tmp=tmp.remove(0,1);
     return tmp;
 }
+
+QByteArray FtpClient::readAllData()
+{
+    TcpSocketData->waitForReadyRead();
+    QByteArray data="";
+    data=TcpSocketData->readAll();
+    return data;
+}
+
+void FtpClient::list(const QString & dir)
+{
+    QByteArray command,tmp;
+    QString str;
+    command="epsv";
+    command+='\0';
+    slotSendToServer(command);
+    tmp=readAllCommand();
+    str=QStringToQByteArray(tmp);
+    passivePort=getPassivePort(str);
+    slotMakeDataConnection(passivePort);
+    command="list ";
+    command+=QStringToQByteArray(dir);
+    command+='\0';
+    slotSendToServer(command);
+    tmp=readAllData();//необработанный список файлов сервера в tmp
+
+
+    //его можно обработать и отобразить
+    str=QStringToQByteArray(tmp);
+    str=getServerFile(str);
+    serverFileList=str;
+
+}
+
+QByteArray FtpClient::readAllCommand()
+{
+    QByteArray data="";
+    data=TcpSocketCommand->readAll();
+    return data;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
