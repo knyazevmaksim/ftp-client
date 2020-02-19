@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(ui->pushButton_6, SIGNAL(clicked()), SLOT(slotSendUserNameAndPass()));
     connect(ui->lineEdit_5, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
     connect(ui->lineEdit_6, SIGNAL(returnPressed()), SLOT(slotSendUserNameAndPass()));
-    connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotLogIn(QByteArray &, QByteArray &)));
+    connect(this, SIGNAL(signalGetUserNameAndPass(QString &, QString &)), p_ftpClient, SLOT(slotLogIn(QString &, QString &)));
     //connect(this, SIGNAL(signalGetUserNameAndPass(QByteArray &, QByteArray &)), p_ftpClient, SLOT(slotShowServerFileList()));
 
 
@@ -40,6 +40,16 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(ui->downLoadButton,SIGNAL(clicked()), SLOT(slotSendDownloadTextSignal()));
     connect(this, SIGNAL(signalDownloadText(QString &)), p_ftpClient, SLOT(slotDownload(QString &)));
     connect(ui->listWidget_2, SIGNAL(itemClicked(QListWidgetItem *)), SLOT(slotGetChosenItem(QListWidgetItem *)));
+
+
+    connect(ui->listWidget_2, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(slotSendCd(QListWidgetItem *)));
+    connect(this, SIGNAL(signalCd(QString &)), p_ftpClient, SLOT(slotCd(QString &)));
+
+
+    connect(ui->pushButton_5, SIGNAL(clicked()), SLOT(slotSendSignalUpload()));
+    connect(this, SIGNAL(signalUpload(QString &, QString &)), p_ftpClient, SLOT(slotPut(QString &, QString &)));
+
+
 }
 
 MainWindow::~MainWindow()
@@ -90,9 +100,11 @@ void MainWindow::slotMakeDataConnection()
 
 void MainWindow::slotSendUserNameAndPass()
 {
-    QByteArray name;
-    QByteArray pass;
-    QDataStream out(&name, QIODevice::WriteOnly);
+    QString name;
+    QString pass;
+    name=ui->lineEdit_5->text();
+    pass=ui->lineEdit_6->text();
+    /*QDataStream out(&name, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out<<ui->lineEdit_5->text();
     for(int i=0; i<name.size()-1; i++)
@@ -117,7 +129,7 @@ void MainWindow::slotSendUserNameAndPass()
         }
     }
     pass=pass.remove(0,1);
-    pass.append('\0');
+    pass.append('\0');*/
 
     emit signalGetUserNameAndPass(name, pass);
 }
@@ -151,10 +163,26 @@ void MainWindow::slotSendDownloadTextSignal()
 void MainWindow::slotGetChosenItem(QListWidgetItem * item)
 {
     fileName=item->text();
+    fileName=fileName.remove(0,1);
+    fileName=fileName.remove(fileName.size()-1,1);
 }
 
+void MainWindow::slotSendCd(QListWidgetItem* item)
+{
+    QString tmp;
+    tmp=item->text();
+    tmp=tmp.remove(0,1);
+    tmp.prepend("/");
+    //tmp=tmp.remove(tmp.size()-1,1);
+    emit signalCd(tmp);
+}
 
-
+void MainWindow::slotSendSignalUpload()
+{
+    QString str="test";
+    QString name="upload.txt";
+    emit signalUpload(str,name);
+}
 
 
 

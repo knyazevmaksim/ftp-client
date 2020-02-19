@@ -95,14 +95,11 @@ void FtpClient::slotTest()
         emit signalDownload(str);
 }
 
-void FtpClient:: slotLogIn(QByteArray& name, QByteArray & pass)
+void FtpClient:: slotLogIn(QString& name, QString & pass)
 {
-    name=name.prepend("user ");
-    pass=pass.prepend("pass ");
-    TcpSocketCommand->write(name);
-    TcpSocketCommand->write(pass);
+    login(name, pass);
 }
-
+//добавить параметр с путем
 void FtpClient::slotShowServerFileList()
 {
     isServerFileList=true;
@@ -190,8 +187,11 @@ void FtpClient::slotDownloadTextFile(QString & data)
 void FtpClient::slotDownload(QString & name)
 {
     QFile file;
-    //file.setFileName("C:/Users/knyazev.m/Desktop/test.txt");
-    file.setFileName("C:/Users/yhwh/Desktop/test.txt");
+    //нужна установка пути
+    QString way="C:/Users/knyazev.m/Desktop/";
+    way+=name;
+    file.setFileName(way);
+    //file.setFileName("C:/Users/yhwh/Desktop/test.txt"+name);
 
 
     isServerFileList=false;
@@ -230,14 +230,13 @@ void FtpClient::get(const QString & file, QIODevice * device)
     command.append('\0');
     slotSendToServer(command);
     slotMakeDataConnection(passivePort);
-    command="retr";
+    command="retr ";
     command+=name;
     command.append('\0');
     slotSendToServer(command);
     command=readAllData();
     device->open(QIODevice::WriteOnly);
     device->write(command);
-
 }
 
 QByteArray FtpClient::QStringToQByteArray (const QString & str)
@@ -298,9 +297,71 @@ QByteArray FtpClient::readAllCommand()
     return data;
 }
 
+void FtpClient::cd(const QString & dir)
+{
+    QByteArray command="cwd ";
+    QByteArray tmp=QStringToQByteArray(dir);
+    command+=tmp;
+    command.append('\0');
+    slotSendToServer(command);
+}
+
+void FtpClient::slotCd(QString & dir)
+{
+    cd(dir);
+    isServerFileList=true;
+    list(dir);
+    emit signalAddServerFileList(serverFileList);
+}
+
+void FtpClient::put(const QByteArray & data, const QString & file)
+{
+    QByteArray command="epsv";
+    QString str;
+    command.append('\0');
+    slotSendToServer(command);
+    str=readAllCommand();
+    passivePort=getPassivePort(str);
+    slotMakeDataConnection(passivePort);
+    command="stor ";
+    command+=QStringToQByteArray(file);
+    command.append('\0');
+    slotSendToServer(command);
+    int bytes=TcpSocketData->write(data);
+    /*if(bytes!=-1)
+    {
+        command="abor";
+        slotSendToServer(command);
+    }
+    else
+    {
+        //ошибка записи файла
+        command="abor";
+        slotSendToServer(command);
+    }*/
+    TcpSocketData->disconnectFromHost();
+}
+
+void FtpClient::slotPut(QString & data, QString & file)
+{
+    QByteArray tmpData;
+    tmpData=QStringToQByteArray(data);
+    put(tmpData, file);
+}
 
 
-
+void FtpClient::login(const QString & name, const QString & pass)
+{
+    QByteArray tName, tPass;
+    tName=QStringToQByteArray(name);
+    tPass=QStringToQByteArray(pass);
+    tName=tName.prepend("user ");
+    tName.append('\0');
+    tPass=tPass.prepend("pass ");
+    tPass=tPass.append('\0');
+    slotSendToServer(tName);
+    slotSendToServer(tPass);
+}
 
 
 

@@ -30,6 +30,9 @@ public:
     QByteArray readAllData();
     QByteArray readAllCommand();
     void list(const QString &);
+    void cd(const QString &);
+    void put(const QByteArray&,const QString &);
+    void login(const QString &,const QString &);
 
 signals:
     void signalPrint(QString&);
@@ -44,10 +47,12 @@ private slots:
     void slotTest();
     void slotConnectToHost(QString & , int& );
     void slotMakeDataConnection(int&);
-    void slotLogIn(QByteArray&, QByteArray&);
+    void slotLogIn(QString&, QString&);
     void slotShowServerFileList();
     void slotDownloadTextFile(QString &);
     void slotDownload(QString &);
+    void slotCd(QString &);
+    void slotPut(QString &, QString &);
 
 };
 

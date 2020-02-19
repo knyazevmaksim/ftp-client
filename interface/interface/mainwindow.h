@@ -27,8 +27,10 @@ signals:
     void signalGetHostAndIp(QString& , int & );
     void signalGetMessage(QByteArray&);
     void signalMakeDataConnection(int& );
-    void signalGetUserNameAndPass(QByteArray &, QByteArray &);
+    void signalGetUserNameAndPass(QString &, QString &);
     void signalDownloadText(QString &);
+    void signalCd(QString &);
+    void signalUpload(QString &, QString &);
 
 private slots:
     void slotSendSignalHostAndIp();
@@ -39,6 +41,8 @@ private slots:
     void slotAddServerFileList(QString &);
     void slotSendDownloadTextSignal();
     void slotGetChosenItem(QListWidgetItem*);
+    void slotSendCd(QListWidgetItem*);
+    void slotSendSignalUpload();
 
 };
 
