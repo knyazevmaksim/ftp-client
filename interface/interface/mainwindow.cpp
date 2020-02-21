@@ -50,6 +50,11 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(this, SIGNAL(signalUpload(QString &, QString &)), p_ftpClient, SLOT(slotPut(QString &, QString &)));
 
 
+    connect(ui->pushButton_7, SIGNAL(clicked()), SLOT(slotSendSignalRename()));
+    connect(this, SIGNAL(signalRename(QString&, QString &)), p_ftpClient, SLOT(slotRename(QString &, QString &)));
+
+    connect(ui->pushButton_8, SIGNAL(clicked()), SLOT(slotSendSignalMkDir()));
+    connect(this, SIGNAL(signalMkDir(QString &)), p_ftpClient, SLOT(slotMkDir(QString&)));
 }
 
 MainWindow::~MainWindow()
@@ -104,32 +109,6 @@ void MainWindow::slotSendUserNameAndPass()
     QString pass;
     name=ui->lineEdit_5->text();
     pass=ui->lineEdit_6->text();
-    /*QDataStream out(&name, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_0);
-    out<<ui->lineEdit_5->text();
-    for(int i=0; i<name.size()-1; i++)
-    {
-        if(name[i]=='\0')
-        {
-            name=name.remove(i,1);
-            i--;
-        }
-    }
-    name=name.remove(0,1);
-    name.append('\0');
-    QDataStream out1(&pass, QIODevice::WriteOnly);
-    out1.setVersion(QDataStream::Qt_5_0);
-    out1<<ui->lineEdit_6->text();
-    for(int i=0; i<pass.size()-1; i++)
-    {
-        if(pass[i]=='\0')
-        {
-            pass=pass.remove(i,1);
-            i--;
-        }
-    }
-    pass=pass.remove(0,1);
-    pass.append('\0');*/
 
     emit signalGetUserNameAndPass(name, pass);
 }
@@ -184,10 +163,17 @@ void MainWindow::slotSendSignalUpload()
     emit signalUpload(str,name);
 }
 
+void MainWindow::slotSendSignalRename()
+{
+    QString tmp=ui->lineEdit_7->text();
+    emit signalRename(fileName, tmp);
+}
 
-
-
-
+void MainWindow::slotSendSignalMkDir()
+{
+    QString tmp=ui->lineEdit_8->text();
+    emit signalMkDir(tmp);
+}
 
 
 

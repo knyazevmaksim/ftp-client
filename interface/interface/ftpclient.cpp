@@ -99,34 +99,27 @@ void FtpClient:: slotLogIn(QString& name, QString & pass)
 {
     login(name, pass);
 }
-//добавить параметр с путем
+
 void FtpClient::slotShowServerFileList()
 {
     isServerFileList=true;
-    /*download=true;
-    QByteArray command="epsv";
+    QByteArray command, data;
+    QString str,tmp;
+    int start{0}, end{0};
+    command="pwd ";
     command+='\0';
+    data=readAllCommand();
     slotSendToServer(command);
-
-    //обработка строки ответа сервера с номером порта для data соединения
-    //connect data соединения
-    TcpSocketData->connectToHost(hostName, passivePort);
-    //команда list
-    command="list";
-    command+='\0';
-    slotSendToServer(command);
-    TcpSocketData->waitForReadyRead();
-    //вывод ее результатов в QListWidget2
-    isServerFileList=false;
-    download=false;
-    */
-    list("/");
+    data=readAllCommand();
+    str=data;
+    start=str.indexOf('"',0);
+    end=str.indexOf('"',start+1);
+    for(int i=start; i<=end; i++)
+    {
+        tmp+=str[i];
+    }
+    list(tmp);
     emit signalAddServerFileList(serverFileList);
-
-
-
-
-
 }
 
 int FtpClient::getPassivePort(QString & str)
@@ -196,30 +189,6 @@ void FtpClient::slotDownload(QString & name)
 
     isServerFileList=false;
     get(name, &file);
-
-    /*download=true;
-    QByteArray command="epsv";
-    command.append('\0');
-    TcpSocketCommand->write(command);
-    TcpSocketData->connectToHost(hostName, 50001);
-    QByteArray tmp;
-    QDataStream out(&tmp, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_0);
-    out<<name;
-    for(int i=0; i<tmp.size()-1; i++)
-    {
-        if(tmp[i]=='\0')
-        {
-            tmp=tmp.remove(i,1);
-            i--;
-        }
-    }
-    tmp=tmp.remove(0,1);
-    command="retr";
-    command+=tmp;
-    command.append('\0');
-    TcpSocketCommand->write(command);
-    fileName=name;*/
 }
 
 void FtpClient::get(const QString & file, QIODevice * device)
@@ -327,18 +296,7 @@ void FtpClient::put(const QByteArray & data, const QString & file)
     command+=QStringToQByteArray(file);
     command.append('\0');
     slotSendToServer(command);
-    int bytes=TcpSocketData->write(data);
-    /*if(bytes!=-1)
-    {
-        command="abor";
-        slotSendToServer(command);
-    }
-    else
-    {
-        //ошибка записи файла
-        command="abor";
-        slotSendToServer(command);
-    }*/
+    TcpSocketData->write(data);
     TcpSocketData->disconnectFromHost();
 }
 
@@ -363,12 +321,61 @@ void FtpClient::login(const QString & name, const QString & pass)
     slotSendToServer(tPass);
 }
 
+void FtpClient::rename(const QString & oldName, const QString & newName)
+{
+    QByteArray command, data;
+    command="rnfr ";
+    command+=QStringToQByteArray(oldName);
+    command+='\0';
+    slotSendToServer(command);
+    data=readAllCommand();
 
+    //emit signalPrint(data);
+    command="rnto ";
+    command+=QStringToQByteArray(newName);
+    command+='\0';
+    slotSendToServer(command);
+    data=readAllCommand();
 
+    //emit signalPrint(data);
 
+}
 
+void FtpClient::remove(const QString & file)
+{
+    QByteArray command{"dele "};
+    command+=QStringToQByteArray(file);
+    command+='\0';
+    slotSendToServer(command);
+}
 
+void FtpClient::mkDir(const QString & name)
+{
+    QByteArray command{"mkd "};
+    command+=QStringToQByteArray(name);
+    command+='\0';
+    slotSendToServer(command);
+}
 
+void FtpClient::rmDir(const QString & name)
+{
+    QByteArray command{"rmd "};
+    command+=QStringToQByteArray(name);
+    command+='\0';
+    slotSendToServer(command);
+}
+
+void FtpClient::slotRename(QString & oldName, QString & newName)
+{
+    rename(oldName, newName);
+}
+
+void FtpClient::slotMkDir(QString & name)
+{
+    mkDir(name);
+}
+
+//слоты для удаления файла и удаления папки
 
 
 

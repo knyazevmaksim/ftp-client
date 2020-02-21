@@ -33,6 +33,10 @@ public:
     void cd(const QString &);
     void put(const QByteArray&,const QString &);
     void login(const QString &,const QString &);
+    void rename(const QString &, const QString &);
+    void remove(const QString &);
+    void mkDir(const QString &);
+    void rmDir(const QString &);
 
 signals:
     void signalPrint(QString&);
@@ -53,6 +57,8 @@ private slots:
     void slotDownload(QString &);
     void slotCd(QString &);
     void slotPut(QString &, QString &);
+    void slotRename(QString &, QString &);
+    void slotMkDir(QString &);
 
 };
 

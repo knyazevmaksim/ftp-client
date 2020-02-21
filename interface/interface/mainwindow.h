@@ -31,6 +31,8 @@ signals:
     void signalDownloadText(QString &);
     void signalCd(QString &);
     void signalUpload(QString &, QString &);
+    void signalRename(QString &, QString &);
+    void signalMkDir(QString &);
 
 private slots:
     void slotSendSignalHostAndIp();
@@ -43,6 +45,8 @@ private slots:
     void slotGetChosenItem(QListWidgetItem*);
     void slotSendCd(QListWidgetItem*);
     void slotSendSignalUpload();
+    void slotSendSignalRename();
+    void slotSendSignalMkDir();
 
 };
 
