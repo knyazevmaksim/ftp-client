@@ -37,6 +37,8 @@ public:
     void remove(const QString &);
     void mkDir(const QString &);
     void rmDir(const QString &);
+    void getBin(const QString &, QIODevice * device=0);
+    void putBin(const QByteArray&,const QString &);
 
 signals:
     void signalPrint(QString&);
@@ -53,12 +55,13 @@ private slots:
     void slotMakeDataConnection(int&);
     void slotLogIn(QString&, QString&);
     void slotShowServerFileList();
-    void slotDownloadTextFile(QString &);
     void slotDownload(QString &);
     void slotCd(QString &);
-    void slotPut(QString &, QString &);
+    void slotPut(QByteArray &, QString &);
     void slotRename(QString &, QString &);
     void slotMkDir(QString &);
+    void slotRmFile(QString &);
+    void slotRmDir(QString &);
 
 };
 

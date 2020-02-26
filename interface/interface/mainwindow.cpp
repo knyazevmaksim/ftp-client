@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
 
 
     connect(ui->pushButton_5, SIGNAL(clicked()), SLOT(slotSendSignalUpload()));
-    connect(this, SIGNAL(signalUpload(QString &, QString &)), p_ftpClient, SLOT(slotPut(QString &, QString &)));
+    connect(this, SIGNAL(signalUpload(QByteArray &, QString &)), p_ftpClient, SLOT(slotPut(QByteArray &, QString &)));
 
 
     connect(ui->pushButton_7, SIGNAL(clicked()), SLOT(slotSendSignalRename()));
@@ -55,6 +55,13 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
 
     connect(ui->pushButton_8, SIGNAL(clicked()), SLOT(slotSendSignalMkDir()));
     connect(this, SIGNAL(signalMkDir(QString &)), p_ftpClient, SLOT(slotMkDir(QString&)));
+
+    connect(ui->pushButton_9, SIGNAL(clicked()), SLOT(slotSendSignalRmFile()));
+    connect(this, SIGNAL(signalRmFile(QString &)), p_ftpClient, SLOT(slotRmFile(QString &)));
+
+
+    connect(ui->pushButton_10, SIGNAL(clicked()), SLOT(slotSendSignalRmDir()));
+    connect(this, SIGNAL(signalRmDir(QString &)), p_ftpClient, SLOT(slotRmDir(QString &)));
 }
 
 MainWindow::~MainWindow()
@@ -158,9 +165,14 @@ void MainWindow::slotSendCd(QListWidgetItem* item)
 
 void MainWindow::slotSendSignalUpload()
 {
-    QString str="test";
-    QString name="upload.txt";
-    emit signalUpload(str,name);
+    QFile file;
+    file.setFileName("C:/Users/yhwh/Desktop/miyagi-endshpil_-_kosandra.mp3");
+    file.open(QIODevice::ReadOnly);
+    QByteArray data;
+    data=file.readAll();
+
+    QString name="miyagi-endshpil_-_kosandra.mp3";
+    emit signalUpload(data,name);
 }
 
 void MainWindow::slotSendSignalRename()
@@ -174,6 +186,18 @@ void MainWindow::slotSendSignalMkDir()
     QString tmp=ui->lineEdit_8->text();
     emit signalMkDir(tmp);
 }
+
+void MainWindow::slotSendSignalRmFile()
+{
+    emit signalRmFile(fileName);
+}
+
+void MainWindow::slotSendSignalRmDir()
+{
+    emit signalRmDir(fileName);
+}
+
+
 
 
 

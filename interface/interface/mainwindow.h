@@ -30,9 +30,11 @@ signals:
     void signalGetUserNameAndPass(QString &, QString &);
     void signalDownloadText(QString &);
     void signalCd(QString &);
-    void signalUpload(QString &, QString &);
+    void signalUpload(QByteArray &, QString &);
     void signalRename(QString &, QString &);
     void signalMkDir(QString &);
+    void signalRmFile(QString &);
+    void signalRmDir(QString &);
 
 private slots:
     void slotSendSignalHostAndIp();
@@ -47,6 +49,8 @@ private slots:
     void slotSendSignalUpload();
     void slotSendSignalRename();
     void slotSendSignalMkDir();
+    void slotSendSignalRmFile();
+    void slotSendSignalRmDir();
 
 };
 
