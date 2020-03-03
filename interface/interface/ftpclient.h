@@ -5,6 +5,9 @@
 #include <QWidget>
 #include <QTcpSocket>
 #include <QFile>
+#include <iostream>
+#include <thread>
+#include <mutex>
 
 
 class FtpClient : public QWidget
@@ -12,6 +15,9 @@ class FtpClient : public QWidget
     Q_OBJECT
 
 private:
+    std::mutex M;
+
+
     QTcpSocket* TcpSocketCommand;
     QTcpSocket* TcpSocketData;
     QString hostName;
@@ -40,6 +46,8 @@ public:
     void getBin(const QString &, QIODevice * device=0);
     void putBin(const QByteArray&,const QString &);
 
+    void get_test(const QString &, QIODevice * device=0);
+
 signals:
     void signalPrint(QString&);
     void signalAddServerFileList(QString &);
@@ -62,6 +70,8 @@ private slots:
     void slotMkDir(QString &);
     void slotRmFile(QString &);
     void slotRmDir(QString &);
+
+    void slotDownloadAll();
 
 };
 

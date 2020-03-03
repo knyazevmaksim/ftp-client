@@ -37,9 +37,9 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     connect(p_ftpClient, SIGNAL(signalAddServerFileList(QString&)), SLOT(slotAddServerFileList(QString&)));
 
 
-    connect(ui->downLoadButton,SIGNAL(clicked()), SLOT(slotSendDownloadTextSignal()));
+   /* connect(ui->downLoadButton,SIGNAL(clicked()), SLOT(slotSendDownloadTextSignal()));
     connect(this, SIGNAL(signalDownloadText(QString &)), p_ftpClient, SLOT(slotDownload(QString &)));
-    connect(ui->listWidget_2, SIGNAL(itemClicked(QListWidgetItem *)), SLOT(slotGetChosenItem(QListWidgetItem *)));
+    connect(ui->listWidget_2, SIGNAL(itemClicked(QListWidgetItem *)), SLOT(slotGetChosenItem(QListWidgetItem *)));*/
 
 
     connect(ui->listWidget_2, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(slotSendCd(QListWidgetItem *)));
@@ -62,6 +62,13 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
 
     connect(ui->pushButton_10, SIGNAL(clicked()), SLOT(slotSendSignalRmDir()));
     connect(this, SIGNAL(signalRmDir(QString &)), p_ftpClient, SLOT(slotRmDir(QString &)));
+
+
+
+
+
+
+    connect(ui->downLoadButton,SIGNAL(clicked()), p_ftpClient, SLOT(slotDownloadAll()));
 }
 
 MainWindow::~MainWindow()

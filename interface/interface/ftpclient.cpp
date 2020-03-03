@@ -4,6 +4,7 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, down
 {
      TcpSocketCommand=new QTcpSocket();
      TcpSocketData=new QTcpSocket();
+
      connect(TcpSocketCommand, SIGNAL(connected()), SLOT(slotConnected()));
     // connect(TcpSocketCommand, SIGNAL(readyRead()), SLOT(slotReadyRead()));
      connect(TcpSocketCommand, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
@@ -48,12 +49,9 @@ void FtpClient::slotError(QAbstractSocket::SocketError err)
 
 void FtpClient::slotSendToServer(QByteArray & data)
 {
-
     TcpSocketCommand->write(data);
-    TcpSocketCommand->flush();
+    TcpSocketCommand->waitForBytesWritten();
     TcpSocketCommand->waitForReadyRead();
-
-
 }
 
 
@@ -158,25 +156,30 @@ void FtpClient::slotDownload(QString & name)
 {
     QFile file;
     //нужна установка пути
-    QString way="C:/Users/yhwh/Desktop/";
-    //QString way="C:/Users/knyazev.m/Desktop/";
+    //QString way="C:/Users/yhwh/Desktop/";
+    QString way="C:/Users/knyazev.m/Desktop/";
     way+=name;
     file.setFileName(way);
 
 
 
     isServerFileList=false;
-   // get(name, &file);
-    getBin(name, &file);
+    get(name, &file);
+    //getBin(name, &file);
 }
 
 void FtpClient::get(const QString & file, QIODevice * device)
 {
+    QByteArray tmp;
+    QString str;
     download=true;
     QByteArray command="epsv";
     QByteArray name=QStringToQByteArray(file);
     command.append('\0');
     slotSendToServer(command);
+    tmp=readAllCommand();
+    str=QStringToQByteArray(tmp);
+    passivePort=getPassivePort(str);
     slotMakeDataConnection(passivePort);
     command="retr ";
     command+=name;
@@ -414,9 +417,66 @@ void FtpClient::putBin(const QByteArray & data, const QString & file)
     TcpSocketData->disconnectFromHost();
 }
 
+void FtpClient::slotDownloadAll()
+{
+    QFile file;
+    //нужна установка пути
+    //QString way="C:/Users/yhwh/Desktop/";
+    QString way="C:/Users/knyazev.m/Desktop/";
+    QFile file2;
+    QFile file3;
 
 
+    QList<QString> lst;
+    lst<<"test.txt"<<"test2.txt"<<"test3.txt";
 
+    way+=lst[0];
+    file.setFileName(way);
+    way="C:/Users/knyazev.m/Desktop/";
+    way+=lst[1];
+    file2.setFileName(way);
+    way="C:/Users/knyazev.m/Desktop/";
+    way+=lst[2];
+    file3.setFileName(way);
+    std::thread thread1(&FtpClient::get_test,this,std::ref(lst[0]),std::move(&file));
+    std::thread thread2(&FtpClient::get_test,this,std::ref(lst[1]),std::move(&file2));
+    std::thread thread3(&FtpClient::get_test,this,std::ref(lst[2]),std::move(&file3));
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    //threads=new std::thread[3];
+    //threads(&FtpClient::get,lst[1],std::ref(file));
+
+
+}
+
+void FtpClient::get_test(const QString & file, QIODevice * device)
+{
+    QByteArray tmp;
+    QString str;
+    M.lock();
+    QByteArray command="epsv";
+    QByteArray name=QStringToQByteArray(file);
+    command.append('\0');
+    slotSendToServer(command);
+    tmp=readAllCommand();
+    str=QStringToQByteArray(tmp);
+    int port=getPassivePort(str);
+    QTcpSocket data;
+    data.connectToHost(hostName,port);
+    QTcpSocket::SocketState state=data.state();
+    data.waitForConnected();
+    command="retr ";
+    command+=name;
+    command.append('\0');
+    slotSendToServer(command);
+    data.waitForReadyRead();
+    command=data.readAll();
+    device->open(QIODevice::WriteOnly);
+    device->write(command);
+    state=data.state();
+    M.unlock();
+}
 
 
 
