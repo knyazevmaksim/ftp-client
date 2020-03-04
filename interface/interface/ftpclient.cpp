@@ -29,11 +29,10 @@ void FtpClient::slotReadyRead()
     }
     if (isServerFileList||download)
     {
-        passivePort=getPassivePort(str);
+        passivePort=getPassivePort();
     }
     emit signalPrint(str);
-    /*if (str.startsWith("150"))
-        isServerFileList=true;*///условие работает когда не нужно
+
 }
 
 
@@ -52,6 +51,7 @@ void FtpClient::slotSendToServer(QByteArray & data)
     TcpSocketCommand->write(data);
     TcpSocketCommand->waitForBytesWritten();
     TcpSocketCommand->waitForReadyRead();
+    data=TcpSocketCommand->readAll();
 }
 
 
@@ -120,18 +120,25 @@ void FtpClient::slotShowServerFileList()
     emit signalAddServerFileList(serverFileList);
 }
 
-int FtpClient::getPassivePort(QString & str)
+int FtpClient::getPassivePort()
 {
     int port;
-    QString tmp;
+    QByteArray tmp, _port;
     int start, end;
-    start=str.indexOf("|||");
-    end=str.indexOf("|", start+3);
+    QString str;
+    QByteArray command="epsv";
+    command.append('\0');
+    TcpSocketCommand->write(command);
+    TcpSocketCommand->waitForBytesWritten();
+    TcpSocketCommand->waitForReadyRead();
+    tmp=TcpSocketCommand->readAll();
+    start=tmp.indexOf("|||");
+    end=tmp.indexOf("|", start+3);
     for(int i=start+3; i<end; i++)
     {
-        tmp+=str[i];
+        _port+=tmp[i];
     }
-    port=tmp.toInt();
+    port=_port.toInt();
     return port;
 }
 
@@ -173,13 +180,9 @@ void FtpClient::get(const QString & file, QIODevice * device)
     QByteArray tmp;
     QString str;
     download=true;
-    QByteArray command="epsv";
+    QByteArray command;
     QByteArray name=QStringToQByteArray(file);
-    command.append('\0');
-    slotSendToServer(command);
-    tmp=readAllCommand();
-    str=QStringToQByteArray(tmp);
-    passivePort=getPassivePort(str);
+    passivePort=getPassivePort();
     slotMakeDataConnection(passivePort);
     command="retr ";
     command+=name;
@@ -220,12 +223,7 @@ void FtpClient::list(const QString & dir)
 {
     QByteArray command,tmp;
     QString str;
-    command="epsv";
-    command+='\0';
-    slotSendToServer(command);
-    tmp=readAllCommand();
-    str=QStringToQByteArray(tmp);
-    passivePort=getPassivePort(str);
+    passivePort=getPassivePort();
     slotMakeDataConnection(passivePort);
     command="list ";
     command+=QStringToQByteArray(dir);
@@ -267,12 +265,8 @@ void FtpClient::slotCd(QString & dir)
 
 void FtpClient::put(const QByteArray & data, const QString & file)
 {
-    QByteArray command="epsv";
-    QString str;
-    command.append('\0');
-    slotSendToServer(command);
-    str=readAllCommand();
-    passivePort=getPassivePort(str);
+    QByteArray command;
+    passivePort=getPassivePort();
     slotMakeDataConnection(passivePort);
     command="stor ";
     command+=QStringToQByteArray(file);
@@ -399,12 +393,9 @@ void FtpClient::getBin(const QString & file, QIODevice * device )
 
 void FtpClient::putBin(const QByteArray & data, const QString & file)
 {
-    QByteArray command="epsv";
+    QByteArray command;
     QString str;
-    command.append('\0');
-    slotSendToServer(command);
-    str=readAllCommand();
-    passivePort=getPassivePort(str);
+    passivePort=getPassivePort();
     slotMakeDataConnection(passivePort);
     command="type i";
     command.append('\0');
@@ -425,11 +416,10 @@ void FtpClient::slotDownloadAll()
     QString way="C:/Users/knyazev.m/Desktop/";
     QFile file2;
     QFile file3;
-
+    QList <QFile*> files;
 
     QList<QString> lst;
     lst<<"test.txt"<<"test2.txt"<<"test3.txt";
-
     way+=lst[0];
     file.setFileName(way);
     way="C:/Users/knyazev.m/Desktop/";
@@ -438,44 +428,52 @@ void FtpClient::slotDownloadAll()
     way="C:/Users/knyazev.m/Desktop/";
     way+=lst[2];
     file3.setFileName(way);
-    std::thread thread1(&FtpClient::get_test,this,std::ref(lst[0]),std::move(&file));
-    std::thread thread2(&FtpClient::get_test,this,std::ref(lst[1]),std::move(&file2));
-    std::thread thread3(&FtpClient::get_test,this,std::ref(lst[2]),std::move(&file3));
-    thread1.join();
-    thread2.join();
-    thread3.join();
-    //threads=new std::thread[3];
-    //threads(&FtpClient::get,lst[1],std::ref(file));
+    std::vector <std::thread> v;
+    files<<&file<<&file2<<&file3;
+    int port{0};
+    QByteArray command="retr ";
+    QByteArray name;
+    for (int i=0;i<3;i++)
+    {
+        port=getPassivePort();
+        std::thread tmp(&FtpClient::get_test,this,std::ref(lst[i]), std::ref(port),std::move(files[i]));
+        v.push_back(std::move(tmp));
+        name=QStringToQByteArray(lst[i]);
+        command+=name;
+        command+='\0';
+        TcpSocketCommand->write(command);
+        TcpSocketCommand->waitForReadyRead(0);
+        command=TcpSocketCommand->readAll();
+        command="retr ";
+    }
 
+    v[0].join();
+    v[1].join();
+    v[2].join();
 
+    /*std::thread thread1(&FtpClient::get_test,this,std::ref(lst[0]),std::move(&file));
+    std::thread thread2(&FtpClient::get_test,this,std::ref(lst[1]),std::move(&file2));*/
+    //std::thread thread3(&FtpClient::get_test,this,std::ref(lst[2]),std::move(&file3));
+    //thread1.join();
+    //thread2.join();
+    //thread3.join();
 }
 
-void FtpClient::get_test(const QString & file, QIODevice * device)
+void FtpClient::get_test(const QString & file, int & port, QIODevice * device)
 {
-    QByteArray tmp;
-    QString str;
-    M.lock();
-    QByteArray command="epsv";
-    QByteArray name=QStringToQByteArray(file);
-    command.append('\0');
-    slotSendToServer(command);
-    tmp=readAllCommand();
-    str=QStringToQByteArray(tmp);
-    int port=getPassivePort(str);
-    QTcpSocket data;
-    data.connectToHost(hostName,port);
-    QTcpSocket::SocketState state=data.state();
-    data.waitForConnected();
-    command="retr ";
-    command+=name;
-    command.append('\0');
-    slotSendToServer(command);
-    data.waitForReadyRead();
-    command=data.readAll();
-    device->open(QIODevice::WriteOnly);
-    device->write(command);
-    state=data.state();
-    M.unlock();
+        QByteArray name=QStringToQByteArray(file);
+        QTcpSocket data;
+        data.connectToHost(hostName,port);
+        data.waitForConnected();
+        QTcpSocket::SocketState state=data.state();
+        data.waitForReadyRead(0);
+
+        name=data.readAll();
+        device->open(QIODevice::WriteOnly);
+        device->write(name);
+
+        state=data.state();
+
 }
 
 

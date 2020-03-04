@@ -8,6 +8,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <vector>
 
 
 class FtpClient : public QWidget
@@ -23,7 +24,7 @@ private:
     QString hostName;
     int passivePort;
     QString serverFileList;
-    int getPassivePort(QString &);
+    int getPassivePort();
     QString getServerFile(QString &);
     bool isServerFileList;
     bool download;
@@ -46,7 +47,7 @@ public:
     void getBin(const QString &, QIODevice * device=0);
     void putBin(const QByteArray&,const QString &);
 
-    void get_test(const QString &, QIODevice * device=0);
+    void get_test(const QString &, int & port, QIODevice * device=0);
 
 signals:
     void signalPrint(QString&);
