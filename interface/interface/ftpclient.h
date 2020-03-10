@@ -9,6 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <chrono>
 
 
 class FtpClient : public QWidget
@@ -47,7 +48,7 @@ public:
     void getBin(const QString &, QIODevice * device=0);
     void putBin(const QByteArray&,const QString &);
 
-    void get_test(const QString &, int & port, QIODevice * device=0);
+    void get_test(int & port, QIODevice * device=0);
 
 signals:
     void signalPrint(QString&);
