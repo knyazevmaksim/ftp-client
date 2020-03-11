@@ -1,5 +1,7 @@
 #include "ftpclient.h"
 
+#include <sstream>
+
 FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, download{false}
 {
      TcpSocketCommand=new QTcpSocket();
@@ -413,8 +415,8 @@ void FtpClient::slotDownloadAll()
 {
     QFile file;
     //нужна установка пути
-    QString way="C:/Users/yhwh/Desktop/";
-    //QString way="C:/Users/knyazev.m/Desktop/";
+    //QString way="C:/Users/yhwh/Desktop/";
+    QString way="C:/Users/knyazev.m/Desktop/";
     QFile file2;
     QFile file3;
     QList <QFile*> files;
@@ -423,10 +425,10 @@ void FtpClient::slotDownloadAll()
     lst<<"test.txt"<<"test2.txt"<<"test3.txt";
     way+=lst[0];
     file.setFileName(way);
-    way="C:/Users/yhwh/Desktop/";
+    way="C:/Users/knyazev.m/Desktop/";
     way+=lst[1];
     file2.setFileName(way);
-    way="C:/Users/yhwh/Desktop/";
+    way="C:/Users/knyazev.m/Desktop/";
     way+=lst[2];
     file3.setFileName(way);
     std::vector <std::thread> v;
@@ -450,7 +452,7 @@ void FtpClient::slotDownloadAll()
     for (int i=0;i<2;i++)
     {
 
-        command="eprt ";
+        /*command="eprt ";
         command+=addr;
 
         if(i==0)
@@ -461,17 +463,18 @@ void FtpClient::slotDownloadAll()
 
         TcpSocketCommand->write(command);
         TcpSocketCommand->waitForReadyRead(-1);
-                command=TcpSocketCommand->readAll();
-                command="retr ";
+                command=TcpSocketCommand->readAll();*/
+        command="retr ";
 
 
 
         name=QStringToQByteArray(lst[i]);
         command+=name;
         command+='\0';
+        //*/
         port=getPassivePort();
 
-        std::thread tmp(&FtpClient::get_test,this, std::ref(port),std::move(files[i]),i+1);
+        std::thread tmp(&FtpClient::get_test,this, port, files[i],i+1);
         TcpSocketCommand->write(command);
         TcpSocketCommand->waitForReadyRead(-1);
         command=TcpSocketCommand->readAll();
@@ -481,24 +484,36 @@ void FtpClient::slotDownloadAll()
 
     }
 
+    /*for (int i=0; i<2;++i)
+    {
+        command="retr ";
+
+
+
+        name=QStringToQByteArray(lst[i]);
+        command+=name;
+        command+='\0';
+
+        TcpSocketCommand->write(command);
+        TcpSocketCommand->waitForReadyRead(-1);
+        command=TcpSocketCommand->readAll();
+        command="retr ";
+
+
+    }*/
+
     v[0].join();
     v[1].join();
     //v[2].join();
 
-    /*std::thread thread1(&FtpClient::get_test,this,std::ref(lst[0]),std::move(&file));
-    std::thread thread2(&FtpClient::get_test,this,std::ref(lst[1]),std::move(&file2));*/
-    //std::thread thread3(&FtpClient::get_test,this,std::ref(lst[2]),std::move(&file3));
-    //thread1.join();
-    //thread2.join();
-    //thread3.join();
 }
 
-void FtpClient::get_test(int & port, QIODevice * device, int type)
+void FtpClient::get_test(int port, QIODevice * device, int type)
 { 
-        if (type==2)
+        /*if (type==2)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-        }
+        }//*/
         QByteArray name;
         QTcpSocket data;
         data.connectToHost(hostName,port);
@@ -507,8 +522,15 @@ void FtpClient::get_test(int & port, QIODevice * device, int type)
         data.waitForReadyRead();
         int bytes=data.bytesAvailable();
         device->open(QIODevice::WriteOnly);
+
+        auto myid = std::this_thread::get_id();
+        std::stringstream ss;
+        ss << myid;
+        std::string mystring = ss.str();
+
         while(bytes!=0)
         {
+            qDebug() << mystring.c_str() << bytes;
             name.resize(bytes);
             name=data.readAll();
             device->write(name);
@@ -516,12 +538,15 @@ void FtpClient::get_test(int & port, QIODevice * device, int type)
             bytes=data.bytesAvailable();
             if (bytes==0)
             {
+                qDebug() << mystring.c_str() << bytes << "Error";
                 slotError(data.error());
                 state=data.state();
                 int tmp=bytes;
             }
 
         }
+
+        qDebug() << mystring.c_str() << bytes;
 
 
 }
