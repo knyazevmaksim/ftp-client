@@ -452,18 +452,32 @@ void FtpClient::slotDownloadAll()
     for (int i=0;i<2;i++)
     {
 
-        /*command="eprt ";
-        command+=addr;
+        QTcpSocket * tmp;
+        tmp=new QTcpSocket;
+        if(i!=0)
+        {
 
-        if(i==0)
-            command+="|5282|";
-        else
-            command+="|5283|";
-        command+='\0';
+            QByteArray tName, tPass;
 
-        TcpSocketCommand->write(command);
-        TcpSocketCommand->waitForReadyRead(-1);
-                command=TcpSocketCommand->readAll();*/
+            tmp->connectToHost("localhost", 21);
+
+            tName="testuser";
+            tPass="qwe123";
+            tName=tName.prepend("user ");
+            tName.append('\0');
+            tPass=tPass.prepend("pass ");
+            tPass=tPass.append('\0');
+            tmp->write(tName);
+            tmp->waitForBytesWritten();
+            tmp->waitForReadyRead();
+            tName=tmp->readAll();
+
+            tmp->write(tPass);
+            tmp->waitForBytesWritten();
+            tmp->waitForReadyRead();
+            tPass=tmp->readAll();
+        }
+
         command="retr ";
 
 
@@ -472,14 +486,49 @@ void FtpClient::slotDownloadAll()
         command+=name;
         command+='\0';
         //*/
+        if(i!=0)
+        {
+            QByteArray A, _port;
+            int start, end;
+            QString str;
+            QByteArray command="epsv";
+            command.append('\0');
+            tmp->write(command);
+            tmp->waitForBytesWritten();
+            tmp->waitForReadyRead();
+            A=tmp->readAll();
+            start=A.indexOf("|||");
+            if (start==0)
+            {
+                //tmp->waitForReadyRead();
+                A=tmp->readAll();
+                start=A.indexOf("|||");
+            }
+            end=A.indexOf("|", start+3);
+            for(int i=start+3; i<end; i++)
+            {
+                _port+=A[i];
+            }
+            port=_port.toInt();
+        }
+        else
         port=getPassivePort();
 
-        std::thread tmp(&FtpClient::get_test,this, port, files[i],i+1);
-        TcpSocketCommand->write(command);
-        TcpSocketCommand->waitForReadyRead(-1);
-        command=TcpSocketCommand->readAll();
+        std::thread threads(&FtpClient::get_test,this, port, files[i],i+1);
+        if(i!=0)
+        {
+            tmp->write(command);
+            tmp->waitForReadyRead(-1);
+            command=tmp->readAll();
+        }
+        else
+        {
+            TcpSocketCommand->write(command);
+            TcpSocketCommand->waitForReadyRead(-1);
+            command=TcpSocketCommand->readAll();
+        }
         command="retr ";
-        v.push_back(std::move(tmp));
+        v.push_back(std::move(threads));
 
 
     }
@@ -510,10 +559,11 @@ void FtpClient::slotDownloadAll()
 
 void FtpClient::get_test(int port, QIODevice * device, int type)
 { 
+
         /*if (type==2)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-        }//*/
+        }*/
         QByteArray name;
         QTcpSocket data;
         data.connectToHost(hostName,port);
