@@ -1,8 +1,8 @@
 #include "ftpclient.h"
 
-#include <sstream>
 
-FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, download{false}
+FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), hostName{""}, port{0}, isServerFileList{false},
+    download{false}
 {
      TcpSocketCommand=new QTcpSocket();
      TcpSocketData=new QTcpSocket();
@@ -15,15 +15,12 @@ FtpClient::FtpClient(QWidget* pwgt):QWidget(pwgt), isServerFileList{false}, down
      connect(TcpSocketData, SIGNAL(connected()), SLOT(slotConnected()));
      //connect(TcpSocketData, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
 
-
-     connect(this, SIGNAL(signalDownload(QString &)), SLOT(slotDownloadTextFile(QString &)));
 }
 
 void FtpClient::slotReadyRead()
 {
     QTextStream in(TcpSocketCommand);
     QString str;
-    //qint64 tmp;
     while(!in.atEnd())
     {
         str+=in.readLine();
@@ -64,10 +61,11 @@ void FtpClient::slotConnected()
 }
 
 
-void FtpClient::slotConnectToHost(QString & ip, int& port)
+void FtpClient::slotConnectToHost(QString & ip, int& p)
 {
     hostName=ip;
-    TcpSocketCommand->connectToHost(hostName, port);
+    port=p;
+    TcpSocketCommand->connectToHost(hostName, p);
 }
 
 void FtpClient::slotMakeDataConnection(int& port)
@@ -288,11 +286,11 @@ void FtpClient::slotPut(QByteArray & data, QString & file)
 }
 
 
-void FtpClient::login(const QString & name, const QString & pass)
+void FtpClient::login(const QString & name, const QString & password)
 {
     QByteArray tName, tPass;
     tName=QStringToQByteArray(name);
-    tPass=QStringToQByteArray(pass);
+    tPass=QStringToQByteArray(password);
     tName=tName.prepend("user ");
     tName.append('\0');
     tPass=tPass.prepend("pass ");
@@ -413,157 +411,12 @@ void FtpClient::putBin(const QByteArray & data, const QString & file)
 
 void FtpClient::slotDownloadAll()
 {
-    QFile file;
-    //нужна установка пути
-    //QString way="C:/Users/yhwh/Desktop/";
-    QString way="C:/Users/knyazev.m/Desktop/";
-    QFile file2;
-    QFile file3;
-    QList <QFile*> files;
-
-    QList<QString> lst;
-    lst<<"test.txt"<<"test2.txt"<<"test3.txt";
-    way+=lst[0];
-    file.setFileName(way);
-    way="C:/Users/knyazev.m/Desktop/";
-    way+=lst[1];
-    file2.setFileName(way);
-    way="C:/Users/knyazev.m/Desktop/";
-    way+=lst[2];
-    file3.setFileName(way);
-    std::vector <std::thread> v;
-    files<<&file<<&file2<<&file3;
-    int port{0};
-    QByteArray command="retr ";
-    QByteArray name;
-
-    //попытка каждый раз устанавливать новый порт на стороне клиента для нового дата коннекта
-
-    QHostAddress ip=TcpSocketCommand->localAddress();
-    Q_IPV6ADDR ipV6=ip.toIPv6Address();
-    QString addr="|2|";
-    /*for(int i=0; i<16;++i)
-    {
-        addr+=ipV6[i];
-    }*/
-    addr+=ip.toString();
-
-
-    for (int i=0;i<2;i++)
-    {
-
-        QTcpSocket * tmp;
-        tmp=new QTcpSocket;
-        if(i!=0)
-        {
-
-            QByteArray tName, tPass;
-
-            tmp->connectToHost("localhost", 21);
-
-            tName="testuser";
-            tPass="qwe123";
-            tName=tName.prepend("user ");
-            tName.append('\0');
-            tPass=tPass.prepend("pass ");
-            tPass=tPass.append('\0');
-            tmp->write(tName);
-            tmp->waitForBytesWritten();
-            tmp->waitForReadyRead();
-            tName=tmp->readAll();
-
-            tmp->write(tPass);
-            tmp->waitForBytesWritten();
-            tmp->waitForReadyRead();
-            tPass=tmp->readAll();
-        }
-
-        command="retr ";
-
-
-
-        name=QStringToQByteArray(lst[i]);
-        command+=name;
-        command+='\0';
-        //*/
-        if(i!=0)
-        {
-            QByteArray A, _port;
-            int start, end;
-            QString str;
-            QByteArray command="epsv";
-            command.append('\0');
-            tmp->write(command);
-            tmp->waitForBytesWritten();
-            tmp->waitForReadyRead();
-            A=tmp->readAll();
-            start=A.indexOf("|||");
-            if (start==0)
-            {
-                //tmp->waitForReadyRead();
-                A=tmp->readAll();
-                start=A.indexOf("|||");
-            }
-            end=A.indexOf("|", start+3);
-            for(int i=start+3; i<end; i++)
-            {
-                _port+=A[i];
-            }
-            port=_port.toInt();
-        }
-        else
-        port=getPassivePort();
-
-        std::thread threads(&FtpClient::get_test,this, port, files[i],i+1);
-        if(i!=0)
-        {
-            tmp->write(command);
-            tmp->waitForReadyRead(-1);
-            command=tmp->readAll();
-        }
-        else
-        {
-            TcpSocketCommand->write(command);
-            TcpSocketCommand->waitForReadyRead(-1);
-            command=TcpSocketCommand->readAll();
-        }
-        command="retr ";
-        v.push_back(std::move(threads));
-
-
-    }
-
-    /*for (int i=0; i<2;++i)
-    {
-        command="retr ";
-
-
-
-        name=QStringToQByteArray(lst[i]);
-        command+=name;
-        command+='\0';
-
-        TcpSocketCommand->write(command);
-        TcpSocketCommand->waitForReadyRead(-1);
-        command=TcpSocketCommand->readAll();
-        command="retr ";
-
-
-    }*/
-
-    v[0].join();
-    v[1].join();
-    //v[2].join();
-
+    lst<<"test.mp3"<<"test2.mp3"<<"test3.mp3"<<"test4.mp3"<<"test5.mp3"<<"test6.mp3"<<"test7.mp3"<<"test8.mp3";
+    downloadDeque();
 }
 
-void FtpClient::get_test(int port, QIODevice * device, int type)
+void FtpClient::get_test(int port, QIODevice * device)
 { 
-
-        /*if (type==2)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-        }*/
         QByteArray name;
         QTcpSocket data;
         data.connectToHost(hostName,port);
@@ -572,15 +425,8 @@ void FtpClient::get_test(int port, QIODevice * device, int type)
         data.waitForReadyRead();
         int bytes=data.bytesAvailable();
         device->open(QIODevice::WriteOnly);
-
-        auto myid = std::this_thread::get_id();
-        std::stringstream ss;
-        ss << myid;
-        std::string mystring = ss.str();
-
         while(bytes!=0)
         {
-            qDebug() << mystring.c_str() << bytes;
             name.resize(bytes);
             name=data.readAll();
             device->write(name);
@@ -588,46 +434,106 @@ void FtpClient::get_test(int port, QIODevice * device, int type)
             bytes=data.bytesAvailable();
             if (bytes==0)
             {
-                qDebug() << mystring.c_str() << bytes << "Error";
                 slotError(data.error());
                 state=data.state();
                 int tmp=bytes;
             }
-
         }
-
-        qDebug() << mystring.c_str() << bytes;
-
-
 }
 
-void FtpClient::test()
+void FtpClient::downloadList(QList<QByteArray>& fileNames)
 {
-    std::vector<QTcpSocket*> v;
-    QTcpSocket * tmp;
+    std::vector<QFile*> files;
+    QByteArray command;
+    QFile * tmp;
+    QString way="C:/Users/yhwh/Desktop/";
+    QString fullWay;
+    Session* session;
+    std::vector<Session*> sessions;
+    std::vector<std::thread> threads;
 
-    int port;
-    for(int i=0; i<10; ++i)
+    for (int i=0; i<fileNames.size(); ++i)
     {
-        tmp=new QTcpSocket();
-        v.push_back(tmp);
-        port=getPassivePort();
-        tmp->connectToHost(hostName,port);
-        tmp->waitForConnected();
-    }
-    QTcpSocket::SocketState state;
-    for(int i=0; i<10; ++i)
-    {
-        state=v[i]->state();
-        std::cout<<state<<std::endl;
+        tmp=new QFile;
+        fullWay=way+fileNames[i];
+        tmp->setFileName(fullWay);
+        files.push_back(tmp);
+
+        /*пока что для каждого файла стартуем свою сессию*/
+        session=new Session(hostName, port);
+        //нужно хранить введенный пароль и логин
+        session->login("test", "qwe123");
+        sessions.push_back(session);
+        //вынесем работу с потоками в класс сессии, нужна ф-ия для джойна потока извне сессии
+
+        connect(session, SIGNAL(signalFree(Session* )), this, SLOT(slotAddNextFile(Sessions * )));
+
+        //std::thread thr(&Session::download,session,files[i], fileNames[i]);
+
+        //threads.push_back(std::move(thr));
+        //нужен статус сессии!
     }
 
+    for (int i=0; i<fileNames.size(); ++i)
+    {
+        threads[i].join();
+    }
 }
 
 
+void FtpClient::slotAddNextFile(Session * session)
+{
+    QString way="C:/Users/yhwh/Desktop/";
+    if(!lst.empty())
+    {
+        std::thread thr(&Session::download,session,way, lst.value(0));
+        lst.removeFirst();
+        thr.detach();
+    }
+    else
+        session->disconnect();
+    //дисконнект при условии что файлов больше нет
+}
 
 
+//ф-я для теста
+void FtpClient::downloadDeque()
+{
+    QByteArray command;
+    QString way="C:/Users/yhwh/Desktop/";
+    Session* session;
+    std::vector<Session*> sessions;
+    std::vector<std::thread> threads;
+
+    for (int i=0; i<lst.size(); ++i)
+    {
+        /*пока что для каждого файла стартуем свою сессию*/
+        session=new Session(hostName, port);
+
+        connect(session, SIGNAL(signalFree(Session* )), this, SLOT(slotAddNextFile(Session * )));
+
+        //нужно хранить введенный пароль и логин
+        if(session->login("test", "qwe123"))
+        {
+            if(!lst.empty())
+            {
+                sessions.push_back(session);
+                //вынесем работу с потоками в класс сессии, нужна ф-ия для джойна потока извне сессии
+                std::thread thr(&Session::download,session,way, lst.value(0));
+                threads.push_back(std::move(thr));
+                lst.removeAt(0);
+            }
+        }
+        else
+            break;
+    }
 
 
+//подумай над порядком выполнения и где джойнить все
+    for (unsigned long long i=0; i<threads.size(); ++i)
+    {
+        threads[i].join();
+    }
+}
 
 

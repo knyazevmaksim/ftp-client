@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
  #include <QListWidgetItem>
+#include <QSettings>
 #include "ftpclient.h"
 
 namespace Ui {
@@ -22,6 +23,11 @@ private:
     Ui::MainWindow *ui;
     FtpClient *p_ftpClient;
     QString fileName;
+    QSettings settings;
+    void readSettings();
+    void writeSettings();
+
+
 
 signals:
     void signalGetHostAndIp(QString& , int & );

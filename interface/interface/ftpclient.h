@@ -10,7 +10,8 @@
 #include <mutex>
 #include <vector>
 #include <chrono>
-#include <QHostAddress>
+
+#include "session.h"
 
 
 class FtpClient : public QWidget
@@ -18,12 +19,10 @@ class FtpClient : public QWidget
     Q_OBJECT
 
 private:
-    std::mutex M;
-
-
     QTcpSocket* TcpSocketCommand;
     QTcpSocket* TcpSocketData;
     QString hostName;
+    int port;
     int passivePort;
     QString serverFileList;
     int getPassivePort();
@@ -32,6 +31,9 @@ private:
     bool download;
     QString fileName;
     QByteArray QStringToQByteArray (const QString &);
+    QList<QByteArray> lst;
+
+
 
 public:
     FtpClient(QWidget* pwgt=0);
@@ -49,8 +51,9 @@ public:
     void getBin(const QString &, QIODevice * device=0);
     void putBin(const QByteArray&,const QString &);
 
-    void get_test(int port, QIODevice * device=0, int=0);
-    void test();
+    void get_test(int port, QIODevice * device=0);
+    void downloadList(QList<QByteArray>&);
+    void downloadDeque();
 
 signals:
     void signalPrint(QString&);
@@ -76,6 +79,9 @@ private slots:
     void slotRmDir(QString &);
 
     void slotDownloadAll();
+
+    void slotAddNextFile(Session *);
+
 
 };
 

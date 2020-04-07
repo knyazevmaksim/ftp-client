@@ -3,9 +3,10 @@
 
 MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), p_ftpClient(ptr)
+    ui(new Ui::MainWindow), p_ftpClient(ptr), settings("test", "ftp client")
 {
     ui->setupUi(this);
+    readSettings();
     //connect(ui->pushButton_2, SIGNAL(clicked()),p_ftpClient,SLOT(slotTest()));
     connect(ui->pushButton_2, SIGNAL(clicked()),SLOT(slotSendSignalHostAndIp()));
     connect(ui->lineEdit, SIGNAL(returnPressed()),SLOT(slotSendSignalHostAndIp()));
@@ -65,14 +66,14 @@ MainWindow::MainWindow(QWidget *parent, FtpClient* ptr) :
 
 
 
-
-
-
     connect(ui->downLoadButton,SIGNAL(clicked()), p_ftpClient, SLOT(slotDownloadAll()));
+
+
 }
 
 MainWindow::~MainWindow()
 {
+    writeSettings();
     delete ui;
 }
 
@@ -204,6 +205,35 @@ void MainWindow::slotSendSignalRmDir()
     emit signalRmDir(fileName);
 }
 
+
+void MainWindow::writeSettings()
+{
+    settings.beginGroup("/Settings");
+    settings.setValue("/width", this->width());
+    settings.setValue("/height", this->height());
+    settings.setValue("/host", ui->lineEdit->text());
+    settings.setValue("/port", ui->lineEdit_2->text());
+    settings.setValue("/login",ui->lineEdit_5->text());
+    settings.setValue("/pass", ui->lineEdit_6->text());
+    settings.setValue("/pos", this->pos());
+    settings.endGroup();
+}
+
+void MainWindow::readSettings()
+{
+    int width;
+    int height;
+    settings.beginGroup("/Settings");
+    width=settings.value("/width", this->width()).toInt();
+    height=settings.value("/height", this->height()).toInt();
+    this->resize(width, height);
+    ui->lineEdit->setText(settings.value("/host","").toString());
+    ui->lineEdit_2->setText(settings.value("/port", "").toString());
+    ui->lineEdit_5->setText(settings.value("/login", "").toString());
+    ui->lineEdit_6->setText(settings.value("/pass", "").toString());
+    this->move(settings.value("/pos", "0,0").toPoint());
+    settings.endGroup();
+}
 
 
 

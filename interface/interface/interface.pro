@@ -3,7 +3,6 @@ QT       += core gui
 QT += network
 
 QT += widgets
-
 QT+=concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -25,12 +24,14 @@ SOURCES += \
     ftpclient.cpp \
     main.cpp \
  \  #  mainwindow.cpp
-    mainwindow.cpp
+    mainwindow.cpp \
+    session.cpp
 
 HEADERS += \
     ftpclient.h \
  \#    mainwindow.h
-    mainwindow.h
+    mainwindow.h \
+    session.h
 
 FORMS += \
     mainwindow.ui
